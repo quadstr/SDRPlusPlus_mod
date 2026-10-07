@@ -415,9 +415,9 @@ private:
             double freq = gui::waterfall.getCenterFrequency();
 
             // Add the offset of the VFO if it exists
-            if (sigpath::vfoManager.vfoExists(selectedVfo)) {
-                freq += sigpath::vfoManager.getOffset(selectedVfo);
-            }
+            //if (sigpath::vfoManager.vfoExists(selectedVfo)) {
+            //    freq += sigpath::vfoManager.getOffset(selectedVfo);
+            //}
 
             // Respond with the frequency
             char buf[128];
