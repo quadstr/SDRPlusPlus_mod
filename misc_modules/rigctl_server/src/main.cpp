@@ -424,6 +424,44 @@ private:
             sprintf(buf, "%" PRIu64 "\n", (uint64_t)freq);
             client->write(strlen(buf), (uint8_t*)buf);
         }
+        else if (parts[0] == "c" || parts[0] == "\\get_center_freq") {
+            std::lock_guard lck(vfoMtx);
+
+            // Получаем только центральную частоту (частоту гетеродина/LO) SDR
+            double freq = gui::waterfall.getCenterFrequency();
+
+            // Отправляем частоту клиенту
+            char buf[128];
+            sprintf(buf, "%" PRIu64 "\n", (uint64_t)freq);
+            client->write(strlen(buf), (uint8_t*)buf);
+        }
+        else if (parts[0] == "C" || parts[0] == "\\set_center_freq") {
+            std::lock_guard lck(vfoMtx);
+
+            // Если количество аргументов неверно, возвращаем ошибку
+            if (parts.size() != 2) {
+                resp = "RPRT 1\n";
+                client->write(resp.size(), (uint8_t*)resp.c_str());
+                return;
+            }
+
+            // Если управление частотой запрещено в интерфейсе, игнорируем
+            if (!tuningEnabled) {
+                resp = "RPRT 0\n";
+                client->write(resp.size(), (uint8_t*)resp.c_str());
+                return;
+            }
+
+            // Парсим переданное значение частоты
+            long long freq = std::stoll(parts[1]);
+            
+            // Устанавливаем центральную частоту (TUNER_MODE_CENTER вместо TUNER_MODE_NORMAL)
+            tuner::tune(tuner::TUNER_MODE_CENTER, selectedVfo, freq);
+            
+            // Отправляем ответ об успешном выполнении
+            resp = "RPRT 0\n";
+            client->write(resp.size(), (uint8_t*)resp.c_str());
+        }
         else if (parts[0] == "M" || parts[0] == "\\set_mode") {
             std::lock_guard lck(vfoMtx);
             resp = "RPRT 0\n";
