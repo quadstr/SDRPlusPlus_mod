@@ -468,13 +468,14 @@ private:
             if (parts.size() >= 2) {
                 bool is_muted = (parts[1] == "1");
                 
-                // Проверяем, существует ли выбранный VFO
-                if (sigpath::vfoManager.vfoExists(selectedVfo)) {
-                    // Обращаемся к ядру для глушения конкретного VFO
-                    sigpath::vfoManager.setMute(selectedVfo, is_muted);
+                // Ищем текущий VFO в публичном словаре (map) менеджера
+                auto it = sigpath::vfoManager.vfos.find(selectedVfo);
+                if (it != sigpath::vfoManager.vfos.end()) {
+                    // Обращаемся к DSP-блоку volume внутри найденного VFO
+                    it->second->volume.setMute(is_muted);
                 }
                 
-                // Отвечаем клиенту (Python), что команда выполнена (RPRT 0 - успех в Rigctl)
+                // Отвечаем клиенту (Python), что команда выполнена
                 const char* reply = "RPRT 0\n";
                 client->write(strlen(reply), (uint8_t*)reply);
             }
