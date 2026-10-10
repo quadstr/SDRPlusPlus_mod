@@ -472,7 +472,7 @@ private:
                 auto it = sigpath::vfoManager.vfos.find(selectedVfo);
                 if (it != sigpath::vfoManager.vfos.end()) {
                     // Обращаемся к DSP-блоку volume внутри найденного VFO
-                    it->second->volume.setMute(is_muted);
+                    it->second->setMute(is_muted);
                 }
                 
                 // Отвечаем клиенту (Python), что команда выполнена
