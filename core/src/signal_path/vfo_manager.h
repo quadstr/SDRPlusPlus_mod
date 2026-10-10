@@ -62,6 +62,8 @@ public:
     Event<VFOManager::VFO*> onVfoDelete;
     Event<std::string> onVfoDeleted;
 
-private:
+public:
     std::map<std::string, VFO*> vfos;
+private:
+    
 };
