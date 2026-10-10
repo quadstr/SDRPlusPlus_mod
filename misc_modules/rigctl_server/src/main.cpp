@@ -462,20 +462,18 @@ private:
             resp = "RPRT 0\n";
             client->write(resp.size(), (uint8_t*)resp.c_str());
         }
-        // Управление Mute
         else if (parts[0] == "\\set_mute") {
             std::lock_guard lck(vfoMtx);
             if (parts.size() >= 2) {
                 bool is_muted = (parts[1] == "1");
                 
-                // Ищем текущий VFO в публичном словаре (map) менеджера
                 auto it = sigpath::vfoManager.vfos.find(selectedVfo);
                 if (it != sigpath::vfoManager.vfos.end()) {
-                    // Обращаемся к DSP-блоку volume внутри найденного VFO
-                    it->second->setMute(is_muted);
+                    // Access the dspVFO pointer inside the VFO object
+                    // (Check your rx_vfo.h file to confirm the exact mute function name if it differs)
+                    it->second->dspVFO->setMute(is_muted); 
                 }
                 
-                // Отвечаем клиенту (Python), что команда выполнена
                 const char* reply = "RPRT 0\n";
                 client->write(strlen(reply), (uint8_t*)reply);
             }
