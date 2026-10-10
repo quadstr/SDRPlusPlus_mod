@@ -462,6 +462,23 @@ private:
             resp = "RPRT 0\n";
             client->write(resp.size(), (uint8_t*)resp.c_str());
         }
+        // Управление Mute
+        else if (parts[0] == "\\set_mute") {
+            std::lock_guard lck(vfoMtx);
+            if (parts.size() >= 2) {
+                bool is_muted = (parts[1] == "1");
+                
+                // Проверяем, существует ли выбранный VFO
+                if (sigpath::vfoManager.vfoExists(selectedVfo)) {
+                    // Обращаемся к ядру для глушения конкретного VFO
+                    sigpath::vfoManager.setMute(selectedVfo, is_muted);
+                }
+                
+                // Отвечаем клиенту (Python), что команда выполнена (RPRT 0 - успех в Rigctl)
+                const char* reply = "RPRT 0\n";
+                client->write(strlen(reply), (uint8_t*)reply);
+            }
+        }
         else if (parts[0] == "M" || parts[0] == "\\set_mode") {
             std::lock_guard lck(vfoMtx);
             resp = "RPRT 0\n";
