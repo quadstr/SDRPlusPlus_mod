@@ -462,6 +462,7 @@ private:
             resp = "RPRT 0\n";
             client->write(resp.size(), (uint8_t*)resp.c_str());
         }
+        // Управление Mute
         else if (parts[0] == "\\set_mute") {
             std::lock_guard lck(vfoMtx);
             if (parts.size() >= 2) {
@@ -469,9 +470,8 @@ private:
                 
                 auto it = sigpath::vfoManager.vfos.find(selectedVfo);
                 if (it != sigpath::vfoManager.vfos.end()) {
-                    // Access the dspVFO pointer inside the VFO object
-                    // (Check your rx_vfo.h file to confirm the exact mute function name if it differs)
-                    it->second->dspVFO->setMute(is_muted); 
+                    // Используем правильное имя метода из rx_vfo.h
+                    it->second->dspVFO->setMuted(is_muted); 
                 }
                 
                 const char* reply = "RPRT 0\n";
