@@ -462,21 +462,50 @@ private:
             resp = "RPRT 0\n";
             client->write(resp.size(), (uint8_t*)resp.c_str());
         }
-        // Управление Mute
-        else if (parts[0] == "\\set_mute") {
+        // Запрос уровня сигнала S-метра (команда "s" или "l STRENGTH")
+        else if (parts[0] == "s" || (parts[0] == "l" && parts.size() >= 2 && parts[1] == "STRENGTH")) {
             std::lock_guard lck(vfoMtx);
-            if (parts.size() >= 2) {
-                bool is_muted = (parts[1] == "1");
-                
-                auto it = sigpath::vfoManager.vfos.find(selectedVfo);
-                if (it != sigpath::vfoManager.vfos.end()) {
-                    // Используем правильное имя метода из rx_vfo.h
-                    it->second->dspVFO->setMuted(is_muted); 
+            float signal_dbm = -120.0f; // Значение по умолчанию, если поток остановлен
+
+            int fftSize = 0;
+            float* fftData = gui::waterfall.acquireLatestFFT(fftSize);
+            
+            if (fftData && fftSize > 0) {
+                double bw = gui::waterfall.getBandwidth();
+                double vfoOffset = 0.0;
+                double vfoBw = 3000.0;
+
+                if (!selectedVfo.empty() && sigpath::vfoManager.vfoExists(selectedVfo)) {
+                    vfoOffset = sigpath::vfoManager.getOffset(selectedVfo);
+                    vfoBw = sigpath::vfoManager.getBandwidth(selectedVfo);
                 }
-                
-                const char* reply = "RPRT 0\n";
-                client->write(strlen(reply), (uint8_t*)reply);
+
+                if (bw > 0) {
+                    // Переводим частоту смещения VFO и его полосу в индексы массива FFT
+                    double centerNorm = (vfoOffset / bw) + 0.5;
+                    double halfBwNorm = (vfoBw / bw) * 0.5;
+
+                    int startBin = std::clamp((int)((centerNorm - halfBwNorm) * fftSize), 0, fftSize - 1);
+                    int endBin   = std::clamp((int)((centerNorm + halfBwNorm) * fftSize), 0, fftSize - 1);
+
+                    // Ищем пиковый уровень сигнала в полосе пропускания фильтра VFO
+                    float maxDb = -200.0f;
+                    for (int i = startBin; i <= endBin; i++) {
+                        if (fftData[i] > maxDb) {
+                            maxDb = fftData[i];
+                        }
+                    }
+                    if (maxDb > -200.0f) {
+                        signal_dbm = maxDb;
+                    }
+                }
+                // Обязательно освобождаем мьютекс водопада!
+                gui::waterfall.releaseLatestFFT();
             }
+
+            char buf[64];
+            snprintf(buf, sizeof(buf), "%.1f\n", signal_dbm);
+            client->write(strlen(buf), (uint8_t*)buf);
         }
         else if (parts[0] == "M" || parts[0] == "\\set_mode") {
             std::lock_guard lck(vfoMtx);
