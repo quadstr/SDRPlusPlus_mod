@@ -1,5 +1,4 @@
 #pragma once
-#include <cstring> // Добавлено для работы memset
 #include "frequency_xlator.h"
 #include "../multirate/rational_resampler.h"
 
@@ -31,11 +30,6 @@ namespace dsp::channel {
             filter.init(NULL, ftaps);
 
             base_type::init(in);
-        }
-
-        // --- НОВЫЙ МЕТОД ДЛЯ УПРАВЛЕНИЯ MUTE ---
-        void setMuted(bool mute) {
-            _muted = mute;
         }
 
         void setInSamplerate(double inSamplerate) {
@@ -93,13 +87,6 @@ namespace dsp::channel {
         }
 
         inline int process(int count, const complex_t* in, complex_t* out) {
-            // --- НОВАЯ ЛОГИКА MUTE ---
-            // Если включен Mute, просто заполняем выходной буфер абсолютными нулями
-            if (_muted) {
-                std::memset(out, 0, count * sizeof(complex_t));
-                return count;
-            }
-
             xlator.process(count, in, out);
             if (!filterNeeded) {
                 return resamp.process(count, out, out);
@@ -143,9 +130,6 @@ namespace dsp::channel {
         double _outSamplerate;
         double _bandwidth;
         double _offset;
-
-        // Флаг состояния Mute
-        bool _muted = false;
 
         std::mutex filterMtx;
     };
