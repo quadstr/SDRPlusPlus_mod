@@ -437,26 +437,26 @@ jobs:
           name: sdrpp_ubuntu_resolute_aarch64
           path: ${{runner.workspace}}/sdrpp_debian_amd64.deb
 
-  build_android:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Fetch container
-        working-directory: ${{runner.workspace}}
-        run: git clone https://github.com/AlexandreRouma/android-sdr-kit
-      - name: Build container
-        working-directory: ${{runner.workspace}}/android-sdr-kit
-        run: docker build --progress=plain -t android-sdr-kit .
-      - name: Build
-        run: docker run --name build -v $GITHUB_WORKSPACE:/root/SDRPlusPlus android-sdr-kit /bin/bash -l -c "cd /root/SDRPlusPlus/android && gradle --info assembleDebug"
-      - name: Recover APK
-        working-directory: ${{runner.workspace}}
-        run: docker cp build:/root/SDRPlusPlus/android/app/build/outputs/apk/debug/app-debug.apk ./ && mv app-debug.apk sdrpp.apk
-      - name: Save APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: sdrpp_android
-          path: ${{runner.workspace}}/sdrpp.apk
+  # build_android:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Fetch container
+  #       working-directory: ${{runner.workspace}}
+  #       run: git clone https://github.com/AlexandreRouma/android-sdr-kit
+  #     - name: Build container
+  #       working-directory: ${{runner.workspace}}/android-sdr-kit
+  #       run: docker build --progress=plain -t android-sdr-kit .
+  #     - name: Build
+  #       run: docker run --name build -v $GITHUB_WORKSPACE:/root/SDRPlusPlus android-sdr-kit /bin/bash -l -c "cd /root/SDRPlusPlus/android && gradle --info assembleDebug"
+  #     - name: Recover APK
+  #       working-directory: ${{runner.workspace}}
+  #       run: docker cp build:/root/SDRPlusPlus/android/app/build/outputs/apk/debug/app-debug.apk ./ && mv app-debug.apk sdrpp.apk
+  #     - name: Save APK
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: sdrpp_android
+  #         path: ${{runner.workspace}}/sdrpp.apk
 
   create_full_archive:
     needs: [
@@ -468,8 +468,7 @@ jobs:
       'build_ubuntu_noble_amd64',
       'build_ubuntu_noble_aarch64',
       'build_ubuntu_resolute_amd64',
-      'build_ubuntu_resolute_aarch64',
-      'build_android'
+      'build_ubuntu_resolute_aarch64'
     ]
     runs-on: ubuntu-latest
     steps:
@@ -486,8 +485,7 @@ jobs:
           mv sdrpp_ubuntu_noble_amd64/sdrpp_debian_amd64.deb sdrpp_all/sdrpp_ubuntu_noble_amd64.deb &&
           mv sdrpp_ubuntu_noble_aarch64/sdrpp_debian_amd64.deb sdrpp_all/sdrpp_ubuntu_noble_aarch64.deb &&
           mv sdrpp_ubuntu_resolute_amd64/sdrpp_debian_amd64.deb sdrpp_all/sdrpp_ubuntu_resolute_amd64.deb &&
-          mv sdrpp_ubuntu_resolute_aarch64/sdrpp_debian_amd64.deb sdrpp_all/sdrpp_ubuntu_resolute_aarch64.deb &&
-          mv sdrpp_android/sdrpp.apk sdrpp_all/sdrpp.apk
+          mv sdrpp_ubuntu_resolute_aarch64/sdrpp_debian_amd64.deb sdrpp_all/sdrpp_ubuntu_resolute_aarch64.deb
       - uses: actions/upload-artifact@v4
         with:
           name: sdrpp_all
